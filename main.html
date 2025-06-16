@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Dynamic Resource Calculator</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 40px;
+      background: #f4f4f4;
+    }
+    .calculator {
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+      width: 600px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    }
+    .resource {
+      margin-bottom: 25px;
+      padding-bottom: 15px;
+      border-bottom: 1px solid #ccc;
+      position: relative;
+    }
+    label {
+      display: block;
+      margin-bottom: 5px;
+      font-weight: bold;
+    }
+    input {
+      padding: 8px;
+      width: 100%;
+      margin-bottom: 10px;
+      box-sizing: border-box;
+    }
+    button {
+      padding: 8px 16px;
+      margin-top: 5px;
+      background: #3498db;
+      color: white;
+      border: none;
+      cursor: pointer;
+      border-radius: 5px;
+    }
+    .delete-btn {
+      position: absolute;
+      top: 0;
+      right: 0;
+      background: #e74c3c;
+      border: none;
+      color: white;
+      padding: 5px 10px;
+      cursor: pointer;
+      border-radius: 3px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+    }
+    th, td {
+      border: 1px solid #ddd;
+      padding: 8px;
+      text-align: center;
+    }
+    th {
+      background-color: #f0f0f0;
+      font-weight: bold;
+    }
+    #total-summary {
+      margin-top: 20px;
+      font-size: 18px;
+      font-weight: bold;
+      text-align: right;
+    }
+  </style>
+</head>
+<body>
+
+<div class="calculator">
+  <h2>Resource Calculator (Currency: coin)</h2>
+  <div id="resources-container"></div>
+  <button onclick="addResource()">+ Add Resource</button>
+  <button onclick="exportCSV()" style="background:#27ae60; margin-left:10px;">Export CSV</button>
+  <div id="total-summary">Total of All Resources: 0 coin</div>
+</div>
+
+<script>
+  let resourceCounter = 0;
+  let resourceTotals = {};
+
+  function addResource() {
+    resourceCounter++;
+    const container = document.getElementById('resources-container');
+
+    const div = document.createElement('div');
+    div.className = 'resource';
+    div.id = `resource-${resourceCounter}`;
+
+    div.innerHTML = `
+      <button class="delete-btn" onclick="deleteResource('${div.id}', '${resourceCounter}')">✖</button>
+      <label>Resource ${resourceCounter} - Name</label>
+      <input type="text" id="name-${resourceCounter}" placeholder="Enter resource name (e.g. Iron)">
+      
+      <label>Amount</label>
+      <input type="number" id="amount-${resourceCounter}" step="any" placeholder="Enter quantity">
+      
+      <label>Price per unit (coin)</label>
+      <input type="number" id="price-${resourceCounter}" step="any" placeholder="Enter price per unit">
+      
+      <label>Divide Quantity By (e.g., number of people)</label>
+      <input type="number" id="divide-${resourceCounter}" step="any" placeholder="Enter number to divide amount by">
+      
+      <button onclick="calculate('${resourceCounter}')">Calculate</button>
+      <div id="result-${resourceCounter}"></div>
+    `;
+
+    container.appendChild(div);
+  }
+
+  function deleteResource(id, resourceId) {
+    const el = document.getElementById(id);
+    el.remove();
+    delete resourceTotals[resourceId];
+    updateTotalSummary();
+  }
+
+  function calculate(id) {
+    const name = document.getElementById(`name-${id}`).value || `Resource ${id}`;
+    const amount = parseFloat(document.getElementById(`amount-${id}`).value);
+    const price = parseFloat(document.getElementById(`price-${id}`).value);
+    const divideBy = parseFloat(document.getElementById(`divide-${id}`).value);
+    const resultDiv = document.getElementById(`result-${id}`);
+
+    if (isNaN(amount) || isNaN(price) || amount <= 0 || price < 0) {
+      resultDiv.innerHTML = "<p style='color: red;'>Please enter valid positive numbers.</p>";
+      return;
+    }
+
+    const total = amount * price;
+    const unitCost = total / amount;
+    let dividedAmount = '—';
+
+    if (!isNaN(divideBy) && divideBy > 0) {
+      dividedAmount = (amount / divideBy).toFixed(2);
+    }
+
+    resourceTotals[id] = total;
+    updateTotalSummary();
+
+    resultDiv.innerHTML = `
+      <h4>${name}</h4>
+      <table>
+        <tr>
+          <th>Total Cost</th>
+          <th>Unit Cost</th>
+          <th>Amount per Person</th>
+        </tr>
+        <tr>
+          <td>${total.toLocaleString(undefined, { maximumFractionDigits: 2 })} coin</td>
+          <td>${unitCost.toLocaleString(undefined, { maximumFractionDigits: 2 })} coin</td>
+          <td>${dividedAmount !== '—' ? dividedAmount : '—'}</td>
+        </tr>
+      </table>
+    `;
+  }
+
+  function updateTotalSummary() {
+    const summaryDiv = document.getElementById('total-summary');
+    const total = Object.values(resourceTotals).reduce((sum, val) => sum + val, 0);
+    summaryDiv.innerText = `Total of All Resources: ${total.toLocaleString(undefined, { maximumFractionDigits: 2 })} coin`;
+  }
+
+  function exportCSV() {
+    const rows = [];
+    // CSV header
+    rows.push(['Resource Name', 'Amount', 'Price per Unit', 'Divide Quantity By', 'Total Cost'].join(','));
+
+    for (let i = 1; i <= resourceCounter; i++) {
+      const el = document.getElementById(`resource-${i}`);
+      if (!el) continue;
+
+      const name = document.getElementById(`name-${i}`).value || `Resource ${i}`;
+      const amount = document.getElementById(`amount-${i}`).value || '';
+      const price = document.getElementById(`price-${i}`).value || '';
+      const divideBy = document.getElementById(`divide-${i}`).value || '';
+      const totalCost = resourceTotals[i] ? resourceTotals[i].toFixed(2) : '';
+
+      // Escape commas in names
+      const safeName = `"${name.replace(/"/g, '""')}"`;
+
+      rows.push([safeName, amount, price, divideBy, totalCost].join(','));
+    }
+
+    const csvContent = rows.join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = 'resources.csv';
+    link.style.display = 'none';
+
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  }
+
+  window.onload = addResource;
+</script>
+
+</body>
+</html>
