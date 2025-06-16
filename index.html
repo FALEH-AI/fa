@@ -105,11 +105,14 @@
       <label>Amount</label>
       <input type="number" id="amount-${resourceCounter}" step="any" placeholder="Enter quantity">
       
+      <label>Multiplier</label>
+      <input type="any" id="multiplier-${resourceCounter}" step="any" value="1" placeholder="Enter multiplier (default 1)">
+      
       <label>Price per unit (coin)</label>
       <input type="number" id="price-${resourceCounter}" step="any" placeholder="Enter price per unit">
       
       <label>Divide Quantity By (e.g., number of people)</label>
-      <input type="number" id="divide-${resourceCounter}" step="any" placeholder="Enter number to divide amount by">
+      <input type="any" id="divide-${resourceCounter}" step="any" placeholder="Enter number to divide amount by">
       
       <button onclick="calculate('${resourceCounter}')">Calculate</button>
       <div id="result-${resourceCounter}"></div>
@@ -128,21 +131,31 @@
   function calculate(id) {
     const name = document.getElementById(`name-${id}`).value || `Resource ${id}`;
     const amount = parseFloat(document.getElementById(`amount-${id}`).value);
+    const multiplier = parseFloat(document.getElementById(`multiplier-${id}`).value) || 1;
     const price = parseFloat(document.getElementById(`price-${id}`).value);
     const divideBy = parseFloat(document.getElementById(`divide-${id}`).value);
     const resultDiv = document.getElementById(`result-${id}`);
 
-    if (isNaN(amount) || isNaN(price) || amount <= 0 || price < 0) {
-      resultDiv.innerHTML = "<p style='color: red;'>Please enter valid positive numbers.</p>";
+    if (isNaN(amount) || amount <= 0) {
+      resultDiv.innerHTML = "<p style='color: red;'>Please enter a valid positive amount.</p>";
+      return;
+    }
+    if (isNaN(multiplier) || multiplier <= 0) {
+      resultDiv.innerHTML = "<p style='color: red;'>Please enter a valid positive multiplier.</p>";
+      return;
+    }
+    if (isNaN(price) || price < 0) {
+      resultDiv.innerHTML = "<p style='color: red;'>Please enter a valid non-negative price.</p>";
       return;
     }
 
-    const total = amount * price;
-    const unitCost = total / amount;
+    const adjustedAmount = amount * multiplier;  // للعرض أو التقسيم فقط
+    const total = amount * price;                 // السعر الإجمالي على الكمية الأصلية فقط
+    const unitCost = price;
     let dividedAmount = '—';
 
     if (!isNaN(divideBy) && divideBy > 0) {
-      dividedAmount = (amount / divideBy).toFixed(2);
+      dividedAmount = (adjustedAmount / divideBy).toFixed(2);
     }
 
     resourceTotals[id] = total;
@@ -152,11 +165,15 @@
       <h4>${name}</h4>
       <table>
         <tr>
+          <th>Original Amount</th>
+          <th>Adjusted Amount</th>
           <th>Total Cost</th>
           <th>Unit Cost</th>
           <th>Amount per Person</th>
         </tr>
         <tr>
+          <td>${amount.toLocaleString(undefined, { maximumFractionDigits: 2 })}</td>
+          <td>${adjustedAmount.toLocaleString(undefined, { maximumFractionDigits: 2 })}</td>
           <td>${total.toLocaleString(undefined, { maximumFractionDigits: 2 })} coin</td>
           <td>${unitCost.toLocaleString(undefined, { maximumFractionDigits: 2 })} coin</td>
           <td>${dividedAmount !== '—' ? dividedAmount : '—'}</td>
@@ -173,8 +190,7 @@
 
   function exportCSV() {
     const rows = [];
-    // CSV header
-    rows.push(['Resource Name', 'Amount', 'Price per Unit', 'Divide Quantity By', 'Total Cost'].join(','));
+    rows.push(['Resource Name', 'Amount', 'Multiplier', 'Price per Unit', 'Divide Quantity By', 'Total Cost'].join(','));
 
     for (let i = 1; i <= resourceCounter; i++) {
       const el = document.getElementById(`resource-${i}`);
@@ -182,14 +198,14 @@
 
       const name = document.getElementById(`name-${i}`).value || `Resource ${i}`;
       const amount = document.getElementById(`amount-${i}`).value || '';
+      const multiplier = document.getElementById(`multiplier-${i}`).value || '1';
       const price = document.getElementById(`price-${i}`).value || '';
       const divideBy = document.getElementById(`divide-${i}`).value || '';
       const totalCost = resourceTotals[i] ? resourceTotals[i].toFixed(2) : '';
 
-      // Escape commas in names
       const safeName = `"${name.replace(/"/g, '""')}"`;
 
-      rows.push([safeName, amount, price, divideBy, totalCost].join(','));
+      rows.push([safeName, amount, multiplier, price, divideBy, totalCost].join(','));
     }
 
     const csvContent = rows.join('\n');
