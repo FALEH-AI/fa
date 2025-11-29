@@ -1,227 +1,526 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ar" dir="rtl">
 <head>
-  <meta charset="UTF-8" />
-  <title>Dynamic Resource Calculator</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      margin: 40px;
-      background: #f4f4f4;
-    }
-    .calculator {
-      background: white;
-      padding: 20px;
-      border-radius: 10px;
-      width: 600px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.2);
-    }
-    .resource {
-      margin-bottom: 25px;
-      padding-bottom: 15px;
-      border-bottom: 1px solid #ccc;
-      position: relative;
-    }
-    label {
-      display: block;
-      margin-bottom: 5px;
-      font-weight: bold;
-    }
-    input {
-      padding: 8px;
-      width: 100%;
-      margin-bottom: 10px;
-      box-sizing: border-box;
-    }
-    button {
-      padding: 8px 16px;
-      margin-top: 5px;
-      background: #3498db;
-      color: white;
-      border: none;
-      cursor: pointer;
-      border-radius: 5px;
-    }
-    .delete-btn {
-      position: absolute;
-      top: 0;
-      right: 0;
-      background: #e74c3c;
-      border: none;
-      color: white;
-      padding: 5px 10px;
-      cursor: pointer;
-      border-radius: 3px;
-    }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 10px;
-    }
-    th, td {
-      border: 1px solid #ddd;
-      padding: 8px;
-      text-align: center;
-    }
-    th {
-      background-color: #f0f0f0;
-      font-weight: bold;
-    }
-    #total-summary {
-      margin-top: 20px;
-      font-size: 18px;
-      font-weight: bold;
-      text-align: right;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>حاسبة أرباح FC 26 (النسخة النهائية - مُصلحة)</title>
+    <style>
+        /* 1. تنسيق الوضع الداكن (Dark Theme) */
+        :root {
+            --bg-color: #121212; 
+            --card-color: #1e1e1e; 
+            --text-color: #e0e0e0; 
+            --input-bg: #2e2e2e; 
+            --border-color: #444;
+            --profit-color: #66BB6A; /* أخضر */
+            --loss-color: #EF5350;   /* أحمر */
+            --update-color: #FFC107; /* أصفر */
+            --delete-color: #dc3545;
+            --edit-color: #17a2b8;
+            --total-color: #007bff; /* أزرق للإجمالي */
+            --buy-color: #ff9800; /* برتقالي للشراء */
+            --sell-color: #2196F3; /* أزرق للبيع */
+            --pdf-button-color: #dc3545; /* أحمر للتصدير */
+            --reset-button-color: #6c757d; /* رمادي لإعادة التعيين */
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            min-height: 100vh;
+            padding: 40px 20px;
+            margin: 0;
+            direction: rtl; 
+        }
+
+        #main-container {
+            display: flex;
+            flex-direction: column;
+            gap: 30px;
+            width: 100%;
+            max-width: 900px;
+        }
+
+        .calculator {
+            background-color: var(--card-color);
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.5);
+            width: 100%;
+        }
+
+        /* تنسيقات المدخلات والأزرار (مختصرة) */
+        input[type="number"], input[type="text"] {
+            width: 100%;
+            padding: 12px;
+            margin-bottom: 20px;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            box-sizing: border-box; 
+            text-align: right;
+            background-color: var(--input-bg);
+            color: var(--text-color);
+        }
+
+        button {
+            padding: 10px 15px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background-color 0.3s;
+            margin-top: 10px;
+            font-size: 0.9em;
+        }
+
+        #actionButton {
+            background-color: var(--profit-color);
+            color: var(--card-color);
+            width: 100%;
+            font-size: 1em;
+            margin-bottom: 5px;
+        }
+
+        #actionButton.updating {
+            background-color: var(--update-color);
+            color: #2c2c2c;
+        }
+        
+        #exportPdfButton {
+            background-color: var(--pdf-button-color);
+            color: white;
+            width: 100%;
+            font-size: 1em;
+            margin-top: 15px;
+        }
+        
+        #resetAllDealsButton {
+            background-color: var(--reset-button-color);
+            color: white;
+            width: 100%;
+            font-size: 0.9em;
+            margin-top: 20px;
+        }
+
+        /* تنسيق قسم التجميع الشامل */
+        .summary-box {
+            background-color: #242424; 
+            padding: 20px;
+            margin-top: 20px;
+            border-radius: 8px;
+            border-top: 3px solid var(--total-color);
+        }
+        .summary-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px dotted #3a3a3a;
+        }
+        .summary-value {
+            font-weight: bold;
+        }
+        
+        .profit { color: var(--profit-color); }
+        .loss { color: var(--loss-color); }
+
+        /* تنسيق قائمة الصفقات */
+        .saved-deals-container {
+            background-color: var(--card-color);
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.5);
+            width: 100%;
+        }
+
+        .deal-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px;
+            margin-bottom: 10px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            background-color: #242424;
+        }
+        
+        /* --------------------------------- */
+        /* 2. تنسيقات خاصة بالطباعة (لـ PDF) */
+        /* --------------------------------- */
+        @media print {
+            /* إخفاء العناصر غير المرغوب فيها في PDF */
+            .calculator, #noDealsMessage, .deal-actions, #exportPdfButton, #cancelEditButton, #actionButton, #resetAllDealsButton {
+                display: none !important;
+            }
+
+            /* إظهار الخلفيات والألوان لـ PDF */
+            body, #main-container, .saved-deals-container {
+                background-color: white !important;
+                color: #333 !important; 
+                box-shadow: none !important;
+                padding: 0 !important;
+                margin: 0 auto !important;
+            }
+            .profit { color: green !important; }
+            .loss { color: red !important; }
+            .summary-value.buy { color: #ff8c00 !important; }
+            .summary-value.sell { color: #007bff !important; }
+            .deal-item, .summary-box {
+                background-color: #f9f9f9 !important;
+                border: 1px solid #ddd !important;
+                -webkit-print-color-adjust: exact; 
+                color-adjust: exact;
+            }
+        }
+    </style>
 </head>
 <body>
 
-<div class="calculator">
-  <h2>Resource Calculator (Currency: coin)</h2>
-  <div id="resources-container"></div>
-  <button onclick="addResource()">+ Add Resource</button>
-  <button onclick="exportCSV()" style="background:#27ae60; margin-left:10px;">Export CSV</button>
-  <div id="total-summary">Total of All Resources: 0 coin</div>
+<div id="main-container">
+    <div class="calculator">
+        <h2>💰 حاسبة أرباح بيع اللاعبين (FC 26)</h2>
+
+        <div>
+            <label for="dealName">اسم الصفقة (اختياري):</label>
+            <input type="text" id="dealName" placeholder="مثال: مبادلة صلاح">
+        </div>
+
+        <div>
+            <label for="sellPrice">سعر البيع للاعب الواحد (كوينز):</label>
+            <input type="number" id="sellPrice" oninput="calculateProfit()" placeholder="أدخل سعر البيع..." min="0" step="100">
+        </div>
+
+        <div>
+            <label for="buyPrice">سعر الشراء للاعب الواحد (كوينز):</label>
+            <input type="number" id="buyPrice" oninput="calculateProfit()" placeholder="أدخل سعر الشراء..." min="0" step="100">
+        </div>
+        
+        <div>
+            <label for="quantity">عدد اللاعبين المباعين:</label>
+            <input type="number" id="quantity" oninput="calculateProfit()" placeholder="أدخل العدد..." min="1" step="1">
+        </div>
+
+        <div class="result" id="results">
+            <p><strong>الإيراد الإجمالي بعد الضريبة:</strong> <span id="netRevenue">0</span> كوينز</p>
+            <p><strong>الربح / الخسارة الصافية الإجمالية:</strong> <span id="netProfit" class="profit">0</span> كوينز</p>
+        </div>
+        
+        <button id="actionButton" class="saving" onclick="handleAction()">حفظ الصفقة</button>
+        <button id="cancelEditButton" onclick="cancelEdit()">إلغاء التعديل والعودة للحفظ</button>
+    </div>
+
+    <div class="saved-deals-container">
+        <h2>📂 الصفقات المحفوظة</h2>
+        <ul id="savedDealsList">
+            </ul>
+        <p id="noDealsMessage" style="text-align: center; color: #888;">لا توجد صفقات محفوظة بعد.</p>
+
+        <div id="summaryBox" class="summary-box" style="display: none;">
+            <h3>📊 ملخص الصفقات الإجمالي</h3>
+            <div class="summary-item">
+                <span>إجمالي سعر الشراء (التكلفة):</span>
+                <span id="totalBuy" class="summary-value buy">0 كوينز</span>
+            </div>
+             <div class="summary-item">
+                <span>إجمالي سعر البيع (الإجمالي الخام):</span>
+                <span id="totalSell" class="summary-value sell">0 كوينز</span>
+            </div>
+            <div class="summary-item">
+                <span>إجمالي الإيراد بعد الضريبة (5%):</span>
+                <span id="totalNetRevenue" class="summary-value sell">0 كوينز</span>
+            </div>
+            <div class="summary-item">
+                <span>صافي الربح / الخسارة الإجمالي:</span>
+                <span id="totalProfitValue" class="summary-value profit">0 كوينز</span>
+            </div>
+        </div>
+        
+        <button id="exportPdfButton" onclick="exportToPdf()">📥 تصدير كملف PDF ملون</button>
+        <button id="resetAllDealsButton" onclick="resetAllDeals()">⚠️ إعادة تعيين وحذف جميع الصفقات</button>
+    </div>
 </div>
 
 <script>
-  let resourceCounter = 0;
-  let resourceTotals = {};
+    const STORAGE_KEY = 'fc26_saved_deals';
+    const TAX_RATE = 0.05;
+    let editingDealId = null;
 
-  function addResource() {
-    resourceCounter++;
-    const container = document.getElementById('resources-container');
-
-    const div = document.createElement('div');
-    div.className = 'resource';
-    div.id = `resource-${resourceCounter}`;
-
-    div.innerHTML = `
-      <button class="delete-btn" onclick="deleteResource('${div.id}', '${resourceCounter}')">✖</button>
-      <label>Resource ${resourceCounter} - Name</label>
-      <input type="text" id="name-${resourceCounter}" placeholder="Enter resource name (e.g. Iron)">
-      
-      <label>Amount</label>
-      <input type="number" id="amount-${resourceCounter}" step="any" placeholder="Enter quantity">
-      
-      <label>Multiplier</label>
-      <input type="any" id="multiplier-${resourceCounter}" step="any" value="1" placeholder="Enter multiplier (default 1)">
-      
-      <label>Price per unit (coin)</label>
-      <input type="number" id="price-${resourceCounter}" step="any" placeholder="Enter price per unit">
-      
-      <label>Divide Quantity By (e.g., number of people)</label>
-      <input type="any" id="divide-${resourceCounter}" step="any" placeholder="Enter number to divide amount by">
-      
-      <button onclick="calculate('${resourceCounter}')">Calculate</button>
-      <div id="result-${resourceCounter}"></div>
-    `;
-
-    container.appendChild(div);
-  }
-
-  function deleteResource(id, resourceId) {
-    const el = document.getElementById(id);
-    el.remove();
-    delete resourceTotals[resourceId];
-    updateTotalSummary();
-  }
-
-  function calculate(id) {
-    const name = document.getElementById(`name-${id}`).value || `Resource ${id}`;
-    const amount = parseFloat(document.getElementById(`amount-${id}`).value);
-    const multiplier = parseFloat(document.getElementById(`multiplier-${id}`).value) || 1;
-    const price = parseFloat(document.getElementById(`price-${id}`).value);
-    const divideBy = parseFloat(document.getElementById(`divide-${id}`).value);
-    const resultDiv = document.getElementById(`result-${id}`);
-
-    if (isNaN(amount) || amount <= 0) {
-      resultDiv.innerHTML = "<p style='color: red;'>Please enter a valid positive amount.</p>";
-      return;
+    // ------------------------------------
+    // دالة جديدة: إعادة تعيين جميع الصفقات
+    // ------------------------------------
+    window.resetAllDeals = function() {
+        if (confirm('⚠️ هل أنت متأكد من حذف جميع الصفقات المحفوظة؟ لن تتمكن من استعادتها.')) {
+            localStorage.removeItem(STORAGE_KEY);
+            editingDealId = null;
+            clearInputFields();
+            renderDealsList();
+            alert('تم حذف جميع الصفقات بنجاح. يمكنك الآن البدء بحفظ صفقات جديدة.');
+        }
     }
-    if (isNaN(multiplier) || multiplier <= 0) {
-      resultDiv.innerHTML = "<p style='color: red;'>Please enter a valid positive multiplier.</p>";
-      return;
-    }
-    if (isNaN(price) || price < 0) {
-      resultDiv.innerHTML = "<p style='color: red;'>Please enter a valid non-negative price.</p>";
-      return;
+    
+    // ------------------------------------
+    // باقي الدوال (كما هي)
+    // ------------------------------------
+    window.exportToPdf = function() {
+        window.print();
     }
 
-    const adjustedAmount = amount * multiplier;  // للعرض أو التقسيم فقط
-    const total = amount * price;                 // السعر الإجمالي على الكمية الأصلية فقط
-    const unitCost = price;
-    let dividedAmount = '—';
-
-    if (!isNaN(divideBy) && divideBy > 0) {
-      dividedAmount = (adjustedAmount / divideBy).toFixed(2);
+    function formatNumber(num) {
+        if (isNaN(num) || num === null) return '0';
+        return Math.round(num).toLocaleString('en-US');
     }
 
-    resourceTotals[id] = total;
-    updateTotalSummary();
+    function calculateProfit() {
+        const sellPrice = parseFloat(document.getElementById('sellPrice').value) || 0;
+        const buyPrice = parseFloat(document.getElementById('buyPrice').value) || 0;
+        const quantity = parseInt(document.getElementById('quantity').value) || 1; 
 
-    resultDiv.innerHTML = `
-      <h4>${name}</h4>
-      <table>
-        <tr>
-          <th>Original Amount</th>
-          <th>Adjusted Amount</th>
-          <th>Total Cost</th>
-          <th>Unit Cost</th>
-          <th>Amount per Person</th>
-        </tr>
-        <tr>
-          <td>${amount.toLocaleString(undefined, { maximumFractionDigits: 2 })}</td>
-          <td>${adjustedAmount.toLocaleString(undefined, { maximumFractionDigits: 2 })}</td>
-          <td>${total.toLocaleString(undefined, { maximumFractionDigits: 2 })} coin</td>
-          <td>${unitCost.toLocaleString(undefined, { maximumFractionDigits: 2 })} coin</td>
-          <td>${dividedAmount !== '—' ? dividedAmount : '—'}</td>
-        </tr>
-      </table>
-    `;
-  }
+        const totalSellPrice = sellPrice * quantity;
+        const totalBuyPrice = buyPrice * quantity;
+        const totalTax = totalSellPrice * TAX_RATE;
+        const totalNetRevenue = totalSellPrice - totalTax;
+        const totalNetProfit = totalNetRevenue - totalBuyPrice;
 
-  function updateTotalSummary() {
-    const summaryDiv = document.getElementById('total-summary');
-    const total = Object.values(resourceTotals).reduce((sum, val) => sum + val, 0);
-    summaryDiv.innerText = `Total of All Resources: ${total.toLocaleString(undefined, { maximumFractionDigits: 2 })} coin`;
-  }
+        document.getElementById('netRevenue').textContent = formatNumber(totalNetRevenue);
+        
+        const netProfitElement = document.getElementById('netProfit');
+        netProfitElement.textContent = formatNumber(totalNetProfit);
 
-  function exportCSV() {
-    const rows = [];
-    rows.push(['Resource Name', 'Amount', 'Multiplier', 'Price per Unit', 'Divide Quantity By', 'Total Cost'].join(','));
+        if (totalNetProfit > 0) {
+            netProfitElement.className = 'deal-profit profit';
+        } else if (totalNetProfit < 0) {
+            netProfitElement.className = 'deal-profit loss';
+        } else {
+            netProfitElement.className = 'deal-profit'; 
+        }
 
-    for (let i = 1; i <= resourceCounter; i++) {
-      const el = document.getElementById(`resource-${i}`);
-      if (!el) continue;
-
-      const name = document.getElementById(`name-${i}`).value || `Resource ${i}`;
-      const amount = document.getElementById(`amount-${i}`).value || '';
-      const multiplier = document.getElementById(`multiplier-${i}`).value || '1';
-      const price = document.getElementById(`price-${i}`).value || '';
-      const divideBy = document.getElementById(`divide-${i}`).value || '';
-      const totalCost = resourceTotals[i] ? resourceTotals[i].toFixed(2) : '';
-
-      const safeName = `"${name.replace(/"/g, '""')}"`;
-
-      rows.push([safeName, amount, multiplier, price, divideBy, totalCost].join(','));
+        return { totalNetProfit, sellPrice, buyPrice, quantity, totalSellPrice, totalBuyPrice, totalNetRevenue };
     }
 
-    const csvContent = rows.join('\n');
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    function getDealsFromStorage() {
+        const storedDeals = localStorage.getItem(STORAGE_KEY);
+        try {
+            return storedDeals ? JSON.parse(storedDeals) : [];
+        } catch (e) {
+            console.error("Local Storage data corrupted, clearing saved deals.", e);
+            // إذا كانت البيانات تالفة، قم بحذفها تلقائيًا
+            localStorage.removeItem(STORAGE_KEY); 
+            return [];
+        }
+    }
+    
+    function handleAction() {
+        if (editingDealId) {
+            updateDeal(editingDealId);
+        } else {
+            saveDeal();
+        }
+    }
+    
+    function saveDeal() {
+        const { totalNetProfit, sellPrice, buyPrice, quantity, totalSellPrice, totalBuyPrice, totalNetRevenue } = calculateProfit();
+        let dealName = document.getElementById('dealName').value.trim() || `صفقة غير مُسماة (${new Date().toLocaleTimeString('ar-EG')})`;
+        
+        if (sellPrice <= 0) {
+            alert("الرجاء إدخال سعر بيع صحيح أكبر من صفر قبل الحفظ.");
+            return;
+        }
+        
+        const newDeal = {
+            id: Date.now(),
+            name: dealName,
+            sell: sellPrice,
+            buy: buyPrice,
+            qty: quantity,
+            profit: totalNetProfit,
+            totalSell: totalSellPrice, 
+            totalBuy: totalBuyPrice,   
+            totalNetRevenue: totalNetRevenue 
+        };
 
-    const link = document.createElement('a');
-    link.href = URL.createObjectURL(blob);
-    link.download = 'resources.csv';
-    link.style.display = 'none';
+        const deals = getDealsFromStorage();
+        deals.push(newDeal);
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(deals));
+        
+        clearInputFields();
+        renderDealsList();
+    }
+    
+    window.updateDeal = function(idToUpdate) {
+        const { totalNetProfit, sellPrice, buyPrice, quantity, totalSellPrice, totalBuyPrice, totalNetRevenue } = calculateProfit();
+        let dealName = document.getElementById('dealName').value.trim() || `صفقة مُعدلة (${new Date().toLocaleTimeString('ar-EG')})`;
 
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  }
+        if (sellPrice <= 0) {
+            alert("الرجاء إدخال سعر بيع صحيح أكبر من صفر قبل التحديث.");
+            return;
+        }
 
-  window.onload = addResource;
+        let deals = getDealsFromStorage();
+        const index = deals.findIndex(deal => deal.id === idToUpdate);
+
+        if (index !== -1) {
+            deals[index] = {
+                id: idToUpdate,
+                name: dealName,
+                sell: sellPrice,
+                buy: buyPrice,
+                qty: quantity,
+                profit: totalNetProfit,
+                totalSell: totalSellPrice,
+                totalBuy: totalBuyPrice,
+                totalNetRevenue: totalNetRevenue
+            };
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(deals));
+            
+            cancelEdit(); 
+            renderDealsList();
+        } else {
+            alert("لم يتم العثور على الصفقة للتحديث.");
+        }
+    }
+
+    window.editDeal = function(dealId) {
+        const deals = getDealsFromStorage();
+        const dealToEdit = deals.find(deal => deal.id === dealId);
+
+        if (dealToEdit) {
+            document.getElementById('dealName').value = dealToEdit.name;
+            document.getElementById('sellPrice').value = dealToEdit.sell;
+            document.getElementById('buyPrice').value = dealToEdit.buy;
+            document.getElementById('quantity').value = dealToEdit.qty;
+
+            calculateProfit();
+
+            editingDealId = dealId;
+            const actionButton = document.getElementById('actionButton');
+            actionButton.textContent = 'تحديث الصفقة المحفوظة';
+            actionButton.classList.remove('saving');
+            actionButton.classList.add('updating');
+            
+            document.getElementById('cancelEditButton').style.display = 'block';
+        }
+    }
+
+    window.cancelEdit = function() {
+        editingDealId = null;
+        const actionButton = document.getElementById('actionButton');
+        actionButton.textContent = 'حفظ الصفقة';
+        actionButton.classList.remove('updating');
+        actionButton.classList.add('saving');
+        
+        document.getElementById('cancelEditButton').style.display = 'none';
+        clearInputFields();
+    }
+    
+    function clearInputFields() {
+        document.getElementById('dealName').value = '';
+        document.getElementById('sellPrice').value = '';
+        document.getElementById('buyPrice').value = '';
+        document.getElementById('quantity').value = '1';
+        calculateProfit();
+    }
+
+    function renderDealsList() {
+        const deals = getDealsFromStorage();
+        const list = document.getElementById('savedDealsList');
+        const message = document.getElementById('noDealsMessage');
+        const summaryBox = document.getElementById('summaryBox');
+
+        list.innerHTML = '';
+        
+        let totalProfit = 0;
+        let grandTotalBuy = 0;
+        let grandTotalSell = 0;
+        let grandTotalNetRevenue = 0;
+
+        if (deals.length === 0) {
+            message.style.display = 'block';
+            summaryBox.style.display = 'none';
+        } else {
+            message.style.display = 'none';
+            summaryBox.style.display = 'block';
+        }
+
+        deals.forEach(deal => {
+            // معالجة الصفقات القديمة/المتضررة
+            if (deal.totalSell === undefined || deal.totalBuy === undefined || deal.profit === undefined) {
+                const sellPrice = parseFloat(deal.sell) || 0;
+                const buyPrice = parseFloat(deal.buy) || 0;
+                const quantity = parseInt(deal.qty) || 1;
+                
+                deal.totalSell = sellPrice * quantity;
+                deal.totalBuy = buyPrice * quantity;
+                deal.totalNetRevenue = deal.totalSell * (1 - TAX_RATE);
+                deal.profit = deal.totalNetRevenue - deal.totalBuy;
+            }
+            
+            const profitValue = deal.profit;
+            
+            // تجميع الإجماليات
+            totalProfit += profitValue; 
+            grandTotalBuy += deal.totalBuy; 
+            grandTotalSell += deal.totalSell;
+            grandTotalNetRevenue += deal.totalNetRevenue;
+
+            const listItem = document.createElement('li');
+            listItem.className = 'deal-item';
+            
+            const profitClass = profitValue > 0 ? 'profit' : (profitValue < 0 ? 'loss' : '');
+            const profitSign = Math.sign(profitValue) >= 0 ? '+' : ''; 
+
+            listItem.innerHTML = `
+                <div class="deal-info">
+                    <strong>${deal.name}</strong>
+                    <p>
+                        بيع: ${formatNumber(deal.sell)} | شراء: ${formatNumber(deal.buy)} | عدد: ${formatNumber(deal.qty)}
+                    </p>
+                </div>
+                <span class="deal-profit ${profitClass}">
+                    ${profitSign}${formatNumber(profitValue)} كوينز
+                </span>
+                <div class="deal-actions">
+                    <button class="edit-btn" onclick="editDeal(${deal.id})">تعديل</button>
+                    <button class="delete-btn" onclick="deleteDeal(${deal.id})">حذف</button>
+                </div>
+            `;
+            list.appendChild(listItem);
+        });
+
+        // عرض الإجماليات النهائية
+        document.getElementById('totalBuy').textContent = `${formatNumber(grandTotalBuy)} كوينز`;
+        document.getElementById('totalSell').textContent = `${formatNumber(grandTotalSell)} كوينز`;
+        document.getElementById('totalNetRevenue').textContent = `${formatNumber(grandTotalNetRevenue)} كوينز`;
+
+        const totalProfitValueElement = document.getElementById('totalProfitValue');
+        const totalClass = totalProfit > 0 ? 'profit' : (totalProfit < 0 ? 'loss' : '');
+        const totalSign = Math.sign(totalProfit) >= 0 ? '+' : ''; 
+        
+        totalProfitValueElement.textContent = `${totalSign}${formatNumber(totalProfit)} كوينز`;
+        totalProfitValueElement.className = `summary-value ${totalClass}`;
+    }
+
+    window.deleteDeal = function(dealId) {
+        if (!confirm('هل أنت متأكد من حذف هذه الصفقة؟')) {
+            return;
+        }
+        
+        let deals = getDealsFromStorage();
+        deals = deals.filter(deal => deal.id !== dealId);
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(deals));
+        renderDealsList();
+        
+        if (editingDealId === dealId) {
+            cancelEdit();
+        }
+    }
+
+    window.onload = () => {
+        calculateProfit();
+        renderDealsList();
+    };
 </script>
 
 </body>
